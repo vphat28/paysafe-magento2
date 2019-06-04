@@ -60,6 +60,7 @@ class CaptureRequest implements BuilderInterface
         return [
             'TXN_TYPE' => $type,
             'ORDER' => $orderDO,
+            'INVOICE' => $order->getOrderIncrementId(),
             'POSTCODE' => $billingAddress->getPostcode(),
             'AMOUNT' => $order->getGrandTotalAmount(),
             'CURRENCY' => $order->getCurrencyCode(),

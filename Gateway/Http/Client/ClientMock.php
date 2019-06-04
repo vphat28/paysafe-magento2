@@ -107,12 +107,6 @@ class ClientMock implements ClientInterface
 
         $response = $auth->jsonSerialize();
 
-        $this->logger->debug(
-            [
-                'request' => $transferObject->getBody()
-            ]
-        );
-
         $response['TXN_TYPE'] = $body['TXN_TYPE'];
 
         return $response;
