@@ -1,0 +1,177 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2016 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="PaysafePaymentGatewayFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">\Paysafe\Payment\Model\Ui\ConfigProvider::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Paysafe\Payment\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PaysafePaymentGatewayValueHandlerPool</argument>
+            <argument name="commandPool" xsi:type="object">PaysafePaymentGatewayCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <virtualType name="PaysafePaymentGatewayConfig" type="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">\Paysafe\Payment\Model\Ui\ConfigProvider::CODE</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Logger, initialized with PaysafePaymentGatewayConfig -->
+    <virtualType name="PaysafePaymentGatewayLogger" type="Magento\Payment\Model\Method\Logger">
+        <arguments>
+            <argument name="config" xsi:type="object">PaysafePaymentGatewayConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Paysafe\Payment\Gateway\Http\Client\ClientMock">
+        <arguments>
+            <argument name="logger" xsi:type="object">PaysafePaymentGatewayLogger</argument>
+        </arguments>
+    </type>
+
+    <!-- Commands infrastructure -->
+    <virtualType name="PaysafePaymentGatewayCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="authorize" xsi:type="string">PaysafePaymentGatewayAuthorizeCommand</item>
+                <item name="capture" xsi:type="string">PaysafePaymentGatewayCaptureCommand</item>
+                <item name="void" xsi:type="string">PaysafePaymentGatewayVoidCommand</item>
+                <item name="refund" xsi:type="string">PaysafePaymentGatewayRefundCommand</item>
+                <item name="cancel" xsi:type="string">PaysafePaymentGatewayCancelCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Authorize command -->
+    <virtualType name="PaysafePaymentGatewayAuthorizeCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">PaysafePaymentGatewayAuthorizationRequest</argument>
+            <argument name="handler" xsi:type="object">PaysafePaymentGatewayResponseHandlerComposite</argument>
+            <argument name="transferFactory" xsi:type="object">Paysafe\Payment\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">Paysafe\Payment\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Authorization Request -->
+    <virtualType name="PaysafePaymentGatewayAuthorizationRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">Paysafe\Payment\Gateway\Request\AuthorizationRequest</item>
+                <item name="mockData" xsi:type="string">Paysafe\Payment\Gateway\Request\MockDataRequest</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Paysafe\Payment\Gateway\Request\AuthorizationRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PaysafePaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Capture command -->
+    <virtualType name="PaysafePaymentGatewayCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Paysafe\Payment\Gateway\Request\CaptureRequest</argument>
+            <argument name="handler" xsi:type="object">Paysafe\Payment\Gateway\Response\TxnIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">Paysafe\Payment\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">Paysafe\Payment\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Capture Request -->
+    <type name="Paysafe\Payment\Gateway\Request\CaptureRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PaysafePaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Void command -->
+    <virtualType name="PaysafePaymentGatewayVoidCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Paysafe\Payment\Gateway\Request\VoidRequest</argument>
+            <argument name="handler" xsi:type="object">Paysafe\Payment\Gateway\Response\TxnIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">Paysafe\Payment\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">Paysafe\Payment\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Void Request -->
+    <type name="Paysafe\Payment\Gateway\Request\VoidRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PaysafePaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Refund command -->
+    <virtualType name="PaysafePaymentGatewayRefundCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Paysafe\Payment\Gateway\Request\RefundRequest</argument>
+            <argument name="handler" xsi:type="object">Paysafe\Payment\Gateway\Response\TxnIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">Paysafe\Payment\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">Paysafe\Payment\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Refund Request -->
+    <type name="Paysafe\Payment\Gateway\Request\RefundRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PaysafePaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Cancel command -->
+    <virtualType name="PaysafePaymentGatewayCancelCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Paysafe\Payment\Gateway\Request\CancelRequest</argument>
+            <argument name="handler" xsi:type="object">Paysafe\Payment\Gateway\Response\TxnIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">Paysafe\Payment\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">Paysafe\Payment\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Refund Request -->
+    <type name="Paysafe\Payment\Gateway\Request\CancelRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PaysafePaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Response handlers -->
+    <virtualType name="PaysafePaymentGatewayResponseHandlerComposite" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="txnid" xsi:type="string">Paysafe\Payment\Gateway\Response\TxnIdHandler</item>
+                <item name="fraud" xsi:type="string">Paysafe\Payment\Gateway\Response\FraudHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="PaysafePaymentGatewayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PaysafePaymentGatewayConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PaysafePaymentGatewayConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">PaysafePaymentGatewayConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Paysafe\Payment\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">PaysafePaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+
+</config>
