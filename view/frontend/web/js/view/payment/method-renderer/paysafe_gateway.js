@@ -7,9 +7,10 @@
 define(
     [
         'jquery',
-        'Magento_Payment/js/view/payment/cc-form'
+        'Magento_Payment/js/view/payment/cc-form',
+        'Magento_Payment/js/model/credit-card-validation/validator'
     ],
-    function ($, Component) {
+    function ($, Component, validator) {
         'use strict';
 
         return Component.extend({
