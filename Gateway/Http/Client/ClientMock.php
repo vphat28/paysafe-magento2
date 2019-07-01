@@ -87,7 +87,7 @@ class ClientMock implements ClientInterface
             $capture = false;
         }
 
-        $auth = $client->cardPaymentService()->authorize(new Authorization(array(
+        $authParams = array(
             'merchantRefNum' => $body['INVOICE'],
             'amount' => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
             'settleWithAuth' => $capture,
@@ -99,11 +99,20 @@ class ClientMock implements ClientInterface
                     'year' => $this->dataProvider->getAdditionalData('ccYear')
                 )
             ),
-                'billingDetails' => [
-                    "zip" => $body['POSTCODE'],
-                ],
-            )
-        ));
+            'billingDetails' => [
+                "zip" => $body['POSTCODE'],
+            ],
+        );
+
+        if (!empty($this->dataProvider->getAdditionalData('accordDChoice'))) {
+            $authParams['accordD'] = [
+                'financingType' => $this->dataProvider->getAdditionalData('accordDType') === '1' ? 'DEFERRED_PAYMENT' : 'EQUAL_PAYMENT',
+                'plan' => $this->dataProvider->getAdditionalData('accordDPlanNumber'),
+                $this->dataProvider->getAdditionalData('accordDType') === '1' ? 'gracePeriod' : 'terms' => $this->dataProvider->getAdditionalData('accordDGracePeriod'),
+            ];
+        }
+
+        $auth = $client->cardPaymentService()->authorize(new Authorization($authParams));
 
         $response = $auth->jsonSerialize();
 

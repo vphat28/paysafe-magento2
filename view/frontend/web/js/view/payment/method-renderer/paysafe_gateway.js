@@ -6,17 +6,34 @@
 /*global define*/
 define(
     [
+        'ko',
         'jquery',
         'Magento_Payment/js/view/payment/cc-form',
         'Magento_Payment/js/model/credit-card-validation/validator'
     ],
-    function ($, Component, validator) {
+    function (ko, $, Component, validator) {
         'use strict';
 
         return Component.extend({
             defaults: {
                 template: 'Paysafe_Payment/payment/form',
-                transactionResult: ''
+                transactionResult: '',
+                accordDChoice: '',
+                accordDType: '',
+                accordDGracePeriod: '',
+                accordDPlanNumber: '',
+            },
+
+            initObservable: function () {
+                this._super()
+                    .observe([
+                        'accordDChoice',
+                        'accordDType',
+                        'accordDPlanNumber',
+                        'accordDGracePeriod',
+                    ]);
+
+                return this;
             },
 
             /**
@@ -24,6 +41,10 @@ define(
              */
             isShowLegend: function () {
                 return true;
+            },
+
+            getThisObject: function () {
+                return this;
             },
 
             getCode: function() {
@@ -41,6 +62,19 @@ define(
             initElement: function () {
                 this._super();
                 this.initValidation();
+            },
+
+            getAccordDTypes: function () {
+                return [
+                    {
+                        'value': '1',
+                        'text': 'Deferred'
+                    },
+                    {
+                        'value': '2',
+                        'text': 'Equal'
+                    }
+                ]
             },
 
             placeOrder: function () {
@@ -67,7 +101,10 @@ define(
                         'ccNumber': this.creditCardNumber(),
                         'ccMonth': this.creditCardExpMonth(),
                         'ccYear': this.creditCardExpYear(),
-                        'ccCVN': this.creditCardVerificationNumber(),
+                        'accordDChoice': this.accordDChoice(),
+                        'accordDType': this.accordDType(),
+                        'accordDGracePeriod': this.accordDGracePeriod(),
+                        'accordDPlanNumber': this.accordDPlanNumber(),
                     }
                 };
             },

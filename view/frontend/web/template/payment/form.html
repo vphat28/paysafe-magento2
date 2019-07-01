@@ -27,6 +27,74 @@
 
         <form class="form" id="co-transparent-form-paysafe" action="#" method="post" data-bind="mageInit: {'validation':{}}">
             <!-- ko template: 'Magento_Payment/payment/cc-form' --><!-- /ko -->
+            <fieldset class="fieldset payment items ccard paysafe_gateway">
+                <div class="field accordd_choice number required">
+                    <input type="checkbox" name="payment[accordd_choice]" class="input"
+                           data-bind="attr: {
+                                        autocomplete: off,
+                                        id: getCode() + '_accordd_choice'},
+                                  enable: isActive($parents),
+                                  checked: accordDChoice,
+                                  value: accordDChoice,
+                                  valueUpdate: 'keyup' "/><label data-bind="attr: {for: getCode() + '_accordd_choice'}" class="label">
+                        <span><!-- ko i18n: 'Include AccordD finance ?'--><!-- /ko --></span>
+                    </label>
+                </div>
+
+                <div class="field accordd_finance_type number required" data-bind="visible: accordDChoice()">
+                    <label data-bind="attr: {for: getCode() + '_accordd_finance_type'}" class="label">
+                        <span><!-- ko i18n: 'Financing Type'--><!-- /ko --></span>
+                    </label>
+                    <div class="control">
+                        <select  name="payment[accordd_finance_type]"
+                                 class="select accordd_finance_type input-text"
+                                 data-bind="attr: {id: getCode() + '_accordd_finance_type', 'data-container': getCode() + '-accordd_finance_type'},
+                                            enable: isActive($parents),
+                                            options: getAccordDTypes(),
+                                            optionsValue: 'value',
+                                            optionsText: 'text',
+                                            value: accordDType">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field accordd_plan_number number required" data-bind="visible: accordDChoice()">
+                    <label data-bind="attr: {for: getCode() + '_accordd_plan_number'}" class="label">
+                        <span><!-- ko i18n: 'Plan Number'--><!-- /ko --></span>
+                    </label>
+                    <div class="control">
+                        <input type="number" name="payment[accordd_plan_number]" class="input-text" value=""
+                               data-bind="attr: {
+                                    autocomplete: off,
+                                    id: getCode() + '_accordd_plan_number',
+                                    title: $t('Plan Number'),
+                                    'data-container': getCode() + '-accordd_plan_number',
+                                    'data-validate': JSON.stringify({'required-number':true})},
+                              enable: isActive($parents),
+                              value: accordDPlanNumber,
+                              valueUpdate: 'keyup' "/>
+                    </div>
+                </div>
+
+
+                <div class="field accordd_gracePeriod number required" data-bind="visible: accordDChoice()">
+                    <label data-bind="attr: {for: getCode() + '_accordd_gracePeriod'}" class="label">
+                        <span><!-- ko i18n: 'Grace Period'--><!-- /ko --></span>
+                    </label>
+                    <div class="control">
+                        <input type="number" name="payment[accordd_gracePeriod]" class="input-text" value=""
+                               data-bind="attr: {
+                                    autocomplete: off,
+                                    id: getCode() + '_accordd_gracePeriod',
+                                    title: $t('Grace Period'),
+                                    'data-container': getCode() + '-accordd_gracePeriod',
+                                    'data-validate': JSON.stringify({'required-number':true})},
+                              enable: isActive($parents),
+                              value: accordDGracePeriod,
+                              valueUpdate: 'keyup' "/>
+                    </div>
+                </div>
+            </fieldset>
         </form>
         <div class="checkout-agreements-block">
             <!-- ko foreach: $parent.getRegion('before-place-order') -->
