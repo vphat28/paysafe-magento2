@@ -1,0 +1,100 @@
+<div  style="display: none;">
+<div class="confirmation-modal-content">
+    <p><?php echo $block->escapeHtml(__('Do you want to initiate a refund?')); ?></p>
+</div>
+</div>
+
+<script>
+    require([
+        'jquery',
+        'Magento_Ui/js/modal/confirm'
+    ], function ($, confirmation) {
+        $(function () {
+
+            window.goodToSubmit = false;
+                window.submitCreditMemo = function() {
+                    if (window.goodToSubmit === true) {
+                        if ($('creditmemo_do_offline')) $('creditmemo_do_offline').value=0;
+                        // Temporary solution will be replaced after refactoring order functionality
+                        jQuery('#edit_form').triggerHandler('save');
+                    }
+                }
+
+                window.submitCreditMemoOffline = function() {
+                    if (window.goodToSubmit === true) {
+                        if ($('creditmemo_do_offline')) $('creditmemo_do_offline').value = 1;
+                        // Temporary solution will be replaced after refactoring order functionality
+                        jQuery('#edit_form').triggerHandler('save');
+                    }
+                }
+            $('[data-ui-id=order-items-submit-offline]').click(function (e) {
+                confirmation({
+                    title: $.mage.__('Confirmation'),
+                    content: $('.confirmation-modal-content'),
+                    actions: {
+                        confirm: function() {
+                            // do something when the confirmation button is clicked
+                        },
+                        cancel: function() {
+                            // do something when the cancel button is clicked
+                        },
+                        always: function() {
+                            // do something when the modal is closed
+                        }
+                    },
+                    buttons: [{
+                        text: $.mage.__('Cancel'),
+                        class: 'action-secondary action-dismiss',
+                        click: function (event) {
+                            window.enableElements('submit-button');
+                            this.closeModal(event);
+                        }
+                    }, {
+                        text: $.mage.__('OK'),
+                        class: 'action-primary action-accept',
+                        click: function (event) {
+                            window.goodToSubmit = true;
+                            window.submitCreditMemoOffline();
+                            this.closeModal(event, true);
+                        }
+                    }]
+                });
+                e.preventDefault();
+            })
+            $('[data-ui-id=order-items-submit-button]').click(function (e) {
+                confirmation({
+                    title: $.mage.__('Confirmation'),
+                    content: $('.confirmation-modal-content'),
+                    actions: {
+                        confirm: function() {
+                            // do something when the confirmation button is clicked
+                        },
+                        cancel: function() {
+                            // do something when the cancel button is clicked
+                        },
+                        always: function() {
+                            // do something when the modal is closed
+                        }
+                    },
+                    buttons: [{
+                        text: $.mage.__('Cancel'),
+                        class: 'action-secondary action-dismiss',
+                        click: function (event) {
+                            window.enableElements('submit-button');
+                            this.closeModal(event);
+                        }
+                    }, {
+                        text: $.mage.__('OK'),
+                        class: 'action-primary action-accept',
+                        click: function (event) {
+                            window.goodToSubmit = true;
+                            window.submitCreditMemo();
+                            this.closeModal(event, true);
+                        }
+                    }]
+                });
+                e.preventDefault();
+            })
+        });
+    });
+</script>
