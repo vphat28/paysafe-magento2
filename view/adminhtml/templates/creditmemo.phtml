@@ -1,6 +1,11 @@
 <div  style="display: none;">
-<div class="confirmation-modal-content">
-    <p><?php echo $block->escapeHtml(__('Do you want to initiate a refund?')); ?></p>
+<div class="confirmation-modal-content-online">
+    <p><?php echo $block->escapeHtml(__('Do you want to initiate a refund online?')); ?></p>
+</div>
+</div>
+<div  style="display: none;">
+<div class="confirmation-modal-content-offline">
+    <p><?php echo $block->escapeHtml(__('Do you want to initiate a refund offline?')); ?></p>
 </div>
 </div>
 
@@ -30,7 +35,7 @@
             $('[data-ui-id=order-items-submit-offline]').click(function (e) {
                 confirmation({
                     title: $.mage.__('Confirmation'),
-                    content: $('.confirmation-modal-content'),
+                    content: $('.confirmation-modal-content-offline'),
                     actions: {
                         confirm: function() {
                             // do something when the confirmation button is clicked
@@ -64,7 +69,7 @@
             $('[data-ui-id=order-items-submit-button]').click(function (e) {
                 confirmation({
                     title: $.mage.__('Confirmation'),
-                    content: $('.confirmation-modal-content'),
+                    content: $('.confirmation-modal-content-online'),
                     actions: {
                         confirm: function() {
                             // do something when the confirmation button is clicked
