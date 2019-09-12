@@ -27,7 +27,7 @@
 
         <form class="form" id="co-transparent-form-paysafe" action="#" method="post" data-bind="mageInit: {'validation':{}}">
             <!-- ko template: 'Magento_Payment/payment/cc-form' --><!-- /ko -->
-            <fieldset class="fieldset payment items ccard paysafe_gateway">
+            <fieldset class="fieldset payment items ccard paysafe_gateway" data-bind="visible: isEnableAccordD()">
                 <div class="field accordd_choice number required">
                     <input type="checkbox" name="payment[accordd_choice]" class="input"
                            data-bind="attr: {
@@ -109,7 +109,7 @@
                         data-bind="
                         attr: {title: $t('Place Order')},
                         enable: (getCode() == isChecked()),
-                        click: placeOrder,
+                        click: placeOrderWrap,
                         css: {disabled: !isPlaceOrderActionAllowed()}
                         "
                         class="action primary checkout"

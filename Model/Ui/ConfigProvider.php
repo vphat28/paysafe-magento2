@@ -67,6 +67,11 @@ class ConfigProvider implements ConfigProviderInterface
                 ],
                 self::CODE => [
                     'active' => $this->helper->isPaysafeActive(),
+                    'testmode' => $this->helper->isTestMode(),
+                    'base64apikey' => base64_encode($this->helper->getSingleUseToken()),
+                    'accountid' => $this->helper->getAccountNumber(),
+                    'threedsecuremode' => $this->helper->threedsecureMode(),
+                    'enable_accordD' => $this->helper->isEnableAccordD(),
                     'transactionResults' => [
                         ClientMock::SUCCESS => __('Success'),
                         ClientMock::FAILURE => __('Fraud')

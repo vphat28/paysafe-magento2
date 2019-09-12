@@ -47,5 +47,17 @@ class TxnIdHandler implements HandlerInterface
             $payment->setAdditionalInformation('paysafe_txn_id', $response[self::TXN_ID]);
             $payment->setAdditionalInformation('paysafe_settlement_txn_id', $response[self::TXN_ID]);
         }
+
+        if (isset($response['TXN_TYPE']) && $response['TXN_TYPE'] === 'A_3DS') {
+            if (isset($response['acsURL'])) {
+                $payment->setAdditionalInformation('3ds_redirect_url', $response['acsURL']);
+                $payment->setAdditionalInformation('paysafe_pareq', $response['paReq']);
+                $payment->setAdditionalInformation('enrollcheck_id', $response['id']);
+                $payment->setAdditionalInformation('auth_params', $response['auth_params']);
+            }
+
+            $order->setStatus('pending');
+            $order->setState('new');
+        }
     }
 }

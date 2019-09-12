@@ -8,7 +8,7 @@
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <!-- Payment Method Facade configuration -->
-    <virtualType name="PaysafePaymentGatewayFacade" type="Magento\Payment\Model\Method\Adapter">
+    <type name="Paysafe\Payment\Model\Adapter">
         <arguments>
             <argument name="code" xsi:type="const">\Paysafe\Payment\Model\Ui\ConfigProvider::CODE</argument>
             <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
@@ -16,7 +16,7 @@
             <argument name="valueHandlerPool" xsi:type="object">PaysafePaymentGatewayValueHandlerPool</argument>
             <argument name="commandPool" xsi:type="object">PaysafePaymentGatewayCommandPool</argument>
         </arguments>
-    </virtualType>
+    </type>
 
     <!-- Configuration reader -->
     <virtualType name="PaysafePaymentGatewayConfig" type="Magento\Payment\Gateway\Config\Config">

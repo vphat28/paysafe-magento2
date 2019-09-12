@@ -3,6 +3,7 @@
 namespace Paysafe\Payment\Gateway\Http\Client;
 
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\UrlInterface;
 use Magento\Payment\Gateway\Http\ClientInterface;
 use Magento\Payment\Gateway\Http\TransferInterface;
 use Magento\Payment\Model\Method\Logger;
@@ -16,19 +17,14 @@ use Paysafe\Payment\Model\PaysafeClient;
 use Paysafe\CardPayments\Authorization;
 use Paysafe\PaysafeException;
 use Paysafe\RequestConflictException;
+use Paysafe\ThreeDSecure\ThreeDEnrollment;
+use GuzzleHttp\ClientFactory;
+use GuzzleHttp\Client;
 
 class ClientMock implements ClientInterface
 {
     const SUCCESS = 1;
     const FAILURE = 0;
-
-    /**
-     * @var array
-     */
-    private $results = [
-        self::SUCCESS,
-        self::FAILURE
-    ];
 
     /**
      * @var Logger
@@ -44,16 +40,26 @@ class ClientMock implements ClientInterface
     /** @var DataProvider */
     private $dataProvider;
 
+    /** @var UrlInterface */
+    private $url;
+
+    /** @var ClientFactory */
+    private $clientFactory;
+
     public function __construct(
         Logger $logger,
         Data $helper,
         PaysafeClient $paysafeClient,
-        DataProvider $dataProvider
+        DataProvider $dataProvider,
+        ClientFactory $clientFactory,
+        UrlInterface $url
     ) {
+        $this->clientFactory = $clientFactory;
         $this->logger = $logger;
         $this->helper = $helper;
         $this->paysafeClient = $paysafeClient;
         $this->dataProvider = $dataProvider;
+        $this->url = $url;
     }
 
     /**
@@ -65,6 +71,10 @@ class ClientMock implements ClientInterface
     public function placeRequest(TransferInterface $transferObject)
     {
         $body = $transferObject->getBody();
+
+        if (!empty($this->dataProvider->getAdditionalData('completedTxnId'))) {
+            return $this->proceedCompletedPayment($body);
+        }
 
         if ($body['TXN_TYPE'] === 'S_only') {
             return $this->placeCaptureOnly($body);
@@ -86,6 +96,9 @@ class ClientMock implements ClientInterface
         } else {
             $capture = false;
         }
+
+        $threeDSecureMode = $this->helper->threedsecureMode();
+
 
         $authParams = array(
             'merchantRefNum' => $body['INVOICE'],
@@ -112,6 +125,35 @@ class ClientMock implements ClientInterface
             ];
         }
 
+        if ($threeDSecureMode > 0) {
+            $hash = hash('crc32', $this->url->getBaseUrl());
+            $enrollmentChecks = $client->threeDSecureService()->enrollmentChecks(new ThreeDEnrollment(array(
+                'merchantRefNum' => $hash . time() . "-enrollmentchecks",
+                'amount' => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
+                'currency' => strtoupper($body['CURRENCY']),
+                'card' => array(
+                    'cardNum' => $this->dataProvider->getAdditionalData('ccNumber'),
+                    'cvv' => $this->dataProvider->getAdditionalData('ccCVN'),
+                    'cardExpiry' => array(
+                        'month' => $this->dataProvider->getAdditionalData('ccMonth'),
+                        'year' => $this->dataProvider->getAdditionalData('ccYear')
+                    )
+                ),
+                'customerIp' => $_SERVER['REMOTE_ADDR'],
+                'userAgent' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : $_SERVER['REMOTE_ADDR'],
+                'acceptHeader' => "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                'merchantUrl' => $this->url->getBaseUrl()
+            )))->jsonSerialize();
+
+            if (isset($enrollmentChecks['threeDEnrollment']) && $enrollmentChecks['threeDEnrollment'] === 'Y') {
+                $response = $enrollmentChecks;
+                $response['TXN_TYPE'] = 'A_3DS';
+                $response['auth_params'] = json_encode($authParams);
+
+                return $response;
+            }
+        }
+
         $auth = $client->cardPaymentService()->authorize(new Authorization($authParams));
 
         $response = $auth->jsonSerialize();
@@ -121,6 +163,36 @@ class ClientMock implements ClientInterface
         return $response;
     }
 
+    private function proceedCompletedPayment($body)
+    {
+        /** @var Client $client */
+        $client = $this->clientFactory->create();
+
+        if ($this->helper->isTestMode()) {
+            $url = 'https://api.test.paysafe.com/cardpayments/v1/accounts/' . $this->helper->getAccountNumber() . '/settlements/' . $this->dataProvider->getAdditionalData('completedTxnId');
+        } else {
+            $url = 'https://api.paysafe.com/cardpayments/v1/accounts/' . $this->helper->getAccountNumber() . '/settlements/' . $this->dataProvider->getAdditionalData('completedTxnId');
+        }
+
+        $response = $client->get($url, [
+            'headers' => [
+                'Authorization' => 'Basic ' . base64_encode($this->helper->getAPIUsername() . ':' . $this->helper->getAPIPassword()),
+                'Content-type' => 'application/json',
+            ],
+        ]);
+
+        $response = json_decode($response->getBody()->getContents(), true);
+        $response['TXN_TYPE'] = 'S';
+
+        return $response;
+    }
+
+    /**
+     * @param $body
+     * @return array|Settlement
+     * @throws LocalizedException
+     * @throws PaysafeException
+     */
     private function placeCaptureOnly($body)
     {
         $order = $body['ORDER'];

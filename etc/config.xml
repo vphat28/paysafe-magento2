@@ -11,7 +11,8 @@
             <paysafe_gateway>
                 <debug>1</debug>
                 <active>0</active>
-                <model>PaysafePaymentGatewayFacade</model><order_status>pending_payment</order_status>
+                <model>Paysafe\Payment\Model\Adapter</model>
+                <order_status>pending_payment</order_status>
                 <payment_action>authorize</payment_action>
                 <title>Paysafe Payment method</title>
                 <currency>USD</currency>
