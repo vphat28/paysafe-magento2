@@ -99,11 +99,20 @@ class ClientMock implements ClientInterface
 
         $threeDSecureMode = $this->helper->threedsecureMode();
 
+        /** @var Order $order */
+        $order = $body['ORDER'];
+        $billingAddress = $order->getBillingAddress();
 
         $authParams = array(
             'merchantRefNum' => $body['INVOICE'],
             'amount' => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
             'settleWithAuth' => $capture,
+            'profile' => [
+                'firstName' => $billingAddress->getFirstname(),
+                'lastName' => $billingAddress->getLastname(),
+                'email' => $billingAddress->getEmail(),
+            ],
+            'customerIp' => $_SERVER['REMOTE_ADDR'],
             'card' => array(
                 'cardNum' => $this->dataProvider->getAdditionalData('ccNumber'),
                 'cvv' => $this->dataProvider->getAdditionalData('ccCVN'),

@@ -43,6 +43,7 @@ class AuthorizationRequest implements BuilderInterface
 
         return [
             'TXN_TYPE' => 'A',
+            'ORDER' => $order,
             'INVOICE' => $order->getOrderIncrementId(),
             'AMOUNT' => $order->getGrandTotalAmount(),
             'CURRENCY' => $order->getCurrencyCode(),
