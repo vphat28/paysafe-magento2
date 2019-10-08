@@ -32,12 +32,6 @@
         </arguments>
     </virtualType>
 
-    <type name="Paysafe\Payment\Gateway\Http\Client\ClientMock">
-        <arguments>
-            <argument name="logger" xsi:type="object">PaysafePaymentGatewayLogger</argument>
-        </arguments>
-    </type>
-
     <!-- Commands infrastructure -->
     <virtualType name="PaysafePaymentGatewayCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
         <arguments>

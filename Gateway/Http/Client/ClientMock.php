@@ -6,7 +6,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\UrlInterface;
 use Magento\Payment\Gateway\Http\ClientInterface;
 use Magento\Payment\Gateway\Http\TransferInterface;
-use Magento\Payment\Model\Method\Logger;
+use Paysafe\Payment\Model\Logger;
 use Magento\Sales\Model\Order;
 use Paysafe\CardPayments\AuthorizationReversal;
 use Paysafe\CardPayments\Refund;
@@ -126,6 +126,10 @@ class ClientMock implements ClientInterface
                 "street" => implode('', $billingAddress->getStreet()),
             ],
         );
+
+        if ($this->helper->isTestMode()) {
+            $this->logger->debug('Authorization request', $authParams);
+        }
 
         if (!empty($this->dataProvider->getAdditionalData('accordDChoice'))) {
             $authParams['accordD'] = [
