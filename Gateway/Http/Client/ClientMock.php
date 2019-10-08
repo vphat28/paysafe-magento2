@@ -123,6 +123,7 @@ class ClientMock implements ClientInterface
             ),
             'billingDetails' => [
                 "zip" => $body['POSTCODE'],
+                "street" => implode('', $billingAddress->getStreet()),
             ],
         );
 
@@ -163,7 +164,11 @@ class ClientMock implements ClientInterface
             }
         }
 
-        $auth = $client->cardPaymentService()->authorize(new Authorization($authParams));
+        try {
+            $auth = $client->cardPaymentService()->authorize(new Authorization($authParams));
+        } catch (\Exception $exception) {
+            throw new LocalizedException(__($exception->getMessage()));
+        }
 
         $response = $auth->jsonSerialize();
 
