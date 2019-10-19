@@ -127,9 +127,7 @@ class ClientMock implements ClientInterface
             ],
         );
 
-        if ($this->helper->isTestMode()) {
-            $this->logger->debug('Authorization request', $authParams);
-        }
+        $this->logger->debug('Authorization request', $authParams);
 
         if (!empty($this->dataProvider->getAdditionalData('accordDChoice'))) {
             $authParams['accordD'] = [
@@ -176,9 +174,13 @@ class ClientMock implements ClientInterface
 
         $response = $auth->jsonSerialize();
 
-        $response['TXN_TYPE'] = $body['TXN_TYPE'];
+        if (isset($response['status']) && $response['status'] === 'COMPLETED') {
+            $response['TXN_TYPE'] = $body['TXN_TYPE'];
 
-        return $response;
+            return $response;
+        } else {
+            throw new LocalizedException(__('Payment has been declined with code' . $response['authCode']));
+        }
     }
 
     private function proceedCompletedPayment($body)
