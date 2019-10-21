@@ -124,6 +124,10 @@ class ClientMock implements ClientInterface
             'billingDetails' => [
                 "zip" => $body['POSTCODE'],
                 "street" => implode('', $billingAddress->getStreet()),
+                "city" => $billingAddress->getCity(),
+                "state" => $billingAddress->getRegionCode(),
+                "country" => $billingAddress->getCountryId(),
+                "phone" => $billingAddress->getTelephone(),
             ],
         );
 
