@@ -21,12 +21,12 @@ class PaysafeClient
         $this->helper = $helper;
     }
 
-    public function getClient()
+    public function getClient($store = null)
     {
         if ($this->client === null) {
-            $paysafeApiKeyId = $this->helper->getAPIUsername();
-            $paysafeApiKeySecret = $this->helper->getAPIPassword();
-            $paysafeAccountNumber = $this->helper->getAccountNumber();
+            $paysafeApiKeyId = $this->helper->getAPIUsername($store);
+            $paysafeApiKeySecret = $this->helper->getAPIPassword($store);
+            $paysafeAccountNumber = $this->helper->getAccountNumber($store);
             $mode = $this->helper->isTestMode() ? Environment::TEST : Environment::LIVE;
             try {
                 $client = new PaysafeApiClient($paysafeApiKeyId, $paysafeApiKeySecret, $mode, $paysafeAccountNumber);

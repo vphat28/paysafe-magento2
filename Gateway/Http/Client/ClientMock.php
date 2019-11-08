@@ -6,6 +6,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\UrlInterface;
 use Magento\Payment\Gateway\Http\ClientInterface;
 use Magento\Payment\Gateway\Http\TransferInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Paysafe\Payment\Model\Logger;
 use Magento\Sales\Model\Order;
 use Paysafe\CardPayments\AuthorizationReversal;
@@ -46,13 +47,17 @@ class ClientMock implements ClientInterface
     /** @var ClientFactory */
     private $clientFactory;
 
+    /** @var StoreManagerInterface */
+    private $storeManager;
+
     public function __construct(
         Logger $logger,
         Data $helper,
         PaysafeClient $paysafeClient,
         DataProvider $dataProvider,
         ClientFactory $clientFactory,
-        UrlInterface $url
+        UrlInterface $url,
+        StoreManagerInterface $storeManager
     ) {
         $this->clientFactory = $clientFactory;
         $this->logger = $logger;
@@ -60,6 +65,7 @@ class ClientMock implements ClientInterface
         $this->paysafeClient = $paysafeClient;
         $this->dataProvider = $dataProvider;
         $this->url = $url;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -89,7 +95,7 @@ class ClientMock implements ClientInterface
         }
 
         $this->helper->initPaysafeSDK();
-        $client = $this->paysafeClient->getClient();
+        $client = $this->paysafeClient->getClient($this->storeManager->getStore());
 
         if ($body['TXN_TYPE'] === 'S') {
             $capture = true;
@@ -219,9 +225,10 @@ class ClientMock implements ClientInterface
      */
     private function placeCaptureOnly($body)
     {
+        /** @var Order $order */
         $order = $body['ORDER'];
         $this->helper->initPaysafeSDK();
-        $client = $this->paysafeClient->getClient();
+        $client = $this->paysafeClient->getClient($order->getStore());
 
         try {
         $response = $client->cardPaymentService()->settlement(new Settlement(array(
