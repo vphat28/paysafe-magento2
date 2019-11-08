@@ -74,7 +74,7 @@ class Callback extends Action
         $payment = $order->getPayment();
         $enrollId = $payment->getAdditionalInformation('enrollcheck_id');
         $params = $this->getRequest()->getParams();
-        $client = $this->paysafeClient->getClient();
+        $client = $this->paysafeClient->getClient($order->getStore());
         $hash = hash('crc32', $this->url->getBaseUrl());
         $response = $client->threeDSecureService()->authentications(new Authentications(array(
             'merchantRefNum' => $hash . time() . "-3dsauthentication",
