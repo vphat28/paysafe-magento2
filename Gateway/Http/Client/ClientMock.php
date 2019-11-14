@@ -262,8 +262,9 @@ class ClientMock implements ClientInterface
         $order = $body['ORDER'];
         $this->helper->initPaysafeSDK();
         $payment = $order->getPayment();
+        $store = $order->getStore();
         $txnId = $payment->getAdditionalInformation('paysafe_settlement_txn_id');
-        $client = $this->paysafeClient->getClient();
+        $client = $this->paysafeClient->getClient($store);
 
         try {
             $response = $client->cardPaymentService()->refund(new Refund(array(
@@ -294,7 +295,7 @@ class ClientMock implements ClientInterface
         $this->helper->initPaysafeSDK();
         $payment = $order->getPayment();
         $txnId = $payment->getAdditionalInformation('paysafe_txn_id');
-        $client = $this->paysafeClient->getClient();
+        $client = $this->paysafeClient->getClient($order->getStore());
 
         try {
             $authReversal = new AuthorizationReversal(array(
