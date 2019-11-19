@@ -42,6 +42,7 @@ class RefundRequest implements BuilderInterface
 
         $payment = $paymentDO->getPayment();
         $orderDO = $payment->getOrder();
+        $order = $paymentDO->getOrder();
 
         if (!$payment instanceof OrderPaymentInterface) {
             throw new \LogicException('Order payment should be provided.');
@@ -50,6 +51,8 @@ class RefundRequest implements BuilderInterface
         return [
             'TXN_TYPE' => 'REFUND',
             'ORDER' => $orderDO,
+            'AMOUNT' => isset($buildSubject['amount']) ? $buildSubject['amount'] : 0,
+            'CURRENCY' => $order->getCurrencyCode(),
             'TXN_ID' => $payment->getLastTransId()
         ];
     }

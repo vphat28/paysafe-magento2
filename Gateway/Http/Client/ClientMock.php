@@ -267,10 +267,15 @@ class ClientMock implements ClientInterface
         $client = $this->paysafeClient->getClient($store);
 
         try {
-            $response = $client->cardPaymentService()->refund(new Refund(array(
+            $refundParams = array(
                 'merchantRefNum' => $order->getIncrementId(),
                 'settlementID' => $txnId,
-            )));
+            );
+
+            if (!empty($body['AMOUNT'])) {
+                $refundParams['amount'] = $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']);
+            }
+            $response = $client->cardPaymentService()->refund(new Refund($refundParams));
         } catch (PaysafeException $exception) {
             if ($exception->getCode() === 5031) {
                 return ['id' => $order->getPayment()->getAdditionalInformation('paysafe_txn_id')];
