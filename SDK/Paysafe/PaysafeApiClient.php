@@ -221,6 +221,7 @@ class PaysafeApiClient
             $opts[CURLOPT_CUSTOMREQUEST] = $request->method;
             $opts[CURLOPT_POSTFIELDS] = $jsonData;
             $opts[CURLOPT_HTTPHEADER][] = 'Content-Length: ' . strlen($jsonData);
+            file_put_contents(BP . '/var/log/paysafe.log', json_encode($jsonData). PHP_EOL, FILE_APPEND);
         }
         curl_setopt_array($curl, $opts);
         $response = curl_exec($curl);

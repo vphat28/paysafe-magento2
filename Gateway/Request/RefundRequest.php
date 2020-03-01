@@ -48,6 +48,8 @@ class RefundRequest implements BuilderInterface
             throw new \LogicException('Order payment should be provided.');
         }
 
+        file_put_contents(BP . '/var/log/paysafe.log', 'refunding object ' . json_encode($buildSubject), FILE_APPEND);
+
         return [
             'TXN_TYPE' => 'REFUND',
             'ORDER' => $orderDO,

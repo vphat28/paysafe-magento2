@@ -273,8 +273,11 @@ class ClientMock implements ClientInterface
             );
 
             if (!empty($body['AMOUNT'])) {
-                $refundParams['amount'] = $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']);
+                $refundParams['amount'] = (int)$body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']);
             }
+
+            $this->logger->debug('refunding ' . json_encode($refundParams));
+
             $response = $client->cardPaymentService()->refund(new Refund($refundParams));
         } catch (PaysafeException $exception) {
             if ($exception->getCode() === 5031) {
