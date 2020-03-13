@@ -19,7 +19,8 @@ class RefundRequest implements BuilderInterface
      */
     public function __construct(
         ConfigInterface $config
-    ) {
+    )
+    {
         $this->config = $config;
     }
 
@@ -46,6 +47,10 @@ class RefundRequest implements BuilderInterface
 
         if (!$payment instanceof OrderPaymentInterface) {
             throw new \LogicException('Order payment should be provided.');
+        }
+
+        if (isset($body['AMOUNT']) && !empty($body['AMOUNT'])) {
+            $refundParams['amount'] = (int)$body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']);
         }
 
         file_put_contents(BP . '/var/log/paysafe.log', 'refunding object ' . json_encode($buildSubject), FILE_APPEND);
