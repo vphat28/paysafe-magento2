@@ -273,7 +273,7 @@ class ClientMock implements ClientInterface
             );
 
             if (!empty($body['AMOUNT'])) {
-                $refundParams['amount'] = (int)$body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']);
+                $refundParams['amount'] = $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']);
             }
 
             $this->logger->debug('refunding ' . json_encode($refundParams));
