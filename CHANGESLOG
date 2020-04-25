@@ -1,2 +1,6 @@
 2019-10-21
 - Expand billingAddress object of card api with customer billing detail from Magento
+
+2020-04-04 - VERSION 1.0.1
+- Support multi store setup
+- Fix issue prevent merchant from doing partial refund
