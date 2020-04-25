@@ -14,14 +14,19 @@ class RefundRequest implements BuilderInterface
      */
     private $config;
 
+    /** @var \Paysafe\Payment\Model\Logger  */
+    private $logger;
+
     /**
      * @param ConfigInterface $config
      */
     public function __construct(
-        ConfigInterface $config
+        ConfigInterface $config,
+        \Paysafe\Payment\Model\Logger $logger
     )
     {
         $this->config = $config;
+        $this->logger = $logger;
     }
 
     /**
@@ -48,6 +53,8 @@ class RefundRequest implements BuilderInterface
         if (!$payment instanceof OrderPaymentInterface) {
             throw new \LogicException('Order payment should be provided.');
         }
+
+        $this->logger->debug('Refunding request ' . json_encode($buildSubject));
 
         return [
             'TXN_TYPE' => 'REFUND',

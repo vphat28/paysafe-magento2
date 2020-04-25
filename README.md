@@ -32,3 +32,5 @@ Mastercard	5200000000001005	Y	N/A
 5200000000001104	C	N
 American Express	340000000001007	Y	N/A
 340000000001098	C	Y
+
+Download link : http://tinyurl.com/paysafemagento23

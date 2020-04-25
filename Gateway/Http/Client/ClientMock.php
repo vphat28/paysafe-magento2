@@ -266,7 +266,7 @@ class ClientMock implements ClientInterface
         $txnId = $payment->getAdditionalInformation('paysafe_settlement_txn_id');
         $client = $this->paysafeClient->getClient($store);
 
-        try {
+    
             $refundParams = array(
                 'merchantRefNum' => $order->getIncrementId(),
                 'settlementID' => $txnId,
@@ -279,13 +279,6 @@ class ClientMock implements ClientInterface
             $this->logger->debug('refunding ' . json_encode($refundParams));
 
             $response = $client->cardPaymentService()->refund(new Refund($refundParams));
-        } catch (PaysafeException $exception) {
-            if ($exception->getCode() === 5031) {
-                return ['id' => $order->getPayment()->getAdditionalInformation('paysafe_txn_id')];
-            }
-
-            throw new LocalizedException(__($exception->getMessage()));
-        }
 
         return $response->jsonSerialize();
     }
