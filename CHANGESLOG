@@ -4,3 +4,7 @@
 2020-04-04 - VERSION 1.0.1
 - Support multi store setup
 - Fix issue prevent merchant from doing partial refund
+
+
+2020-05-10 - VERSION 1.0.2
+- Fix issue prevent merchant from doing multiple refunds

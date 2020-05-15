@@ -269,6 +269,7 @@ class ClientMock implements ClientInterface
     
             $refundParams = array(
                 'merchantRefNum' => $order->getIncrementId(),
+                'dupCheck' => false,
                 'settlementID' => $txnId,
             );
 

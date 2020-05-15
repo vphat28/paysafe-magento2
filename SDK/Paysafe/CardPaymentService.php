@@ -245,7 +245,6 @@ class CardPaymentService
         $refund->setRequiredFields(array('merchantRefNum'));
         $refund->setOptionalFields(array(
              'amount',
-             'dupCheck',
              'splitpay',
         ));
 

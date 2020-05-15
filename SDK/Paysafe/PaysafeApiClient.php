@@ -218,6 +218,13 @@ class PaysafeApiClient
         }
         if ($request->method != Request::GET) {
             $jsonData = ($request->body?$request->body->toJson():"");
+
+            if (defined('CH_REFUND_REQUEST')) {
+                $jsonData = json_decode($jsonData);
+                $jsonData->dupCheck = false;
+                $jsonData = json_encode($jsonData);
+            }
+
             $opts[CURLOPT_CUSTOMREQUEST] = $request->method;
             $opts[CURLOPT_POSTFIELDS] = $jsonData;
             $opts[CURLOPT_HTTPHEADER][] = 'Content-Length: ' . strlen($jsonData);

@@ -54,6 +54,7 @@ class RefundRequest implements BuilderInterface
             throw new \LogicException('Order payment should be provided.');
         }
 
+        define('CH_REFUND_REQUEST', true);
         $this->logger->debug('Refunding request ' . json_encode($buildSubject));
 
         return [
