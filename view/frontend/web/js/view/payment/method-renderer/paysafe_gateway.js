@@ -154,6 +154,9 @@ define(
                   if(data.status === 'threed2completed') {
                     self.completedTxnId = data.dataLoad.id;
                     return self.placeOrder();
+                  } else {
+                    alert('Error in 3DS version 2');
+                    fullScreenLoader.stopLoader();
                   }
                 });
             });
