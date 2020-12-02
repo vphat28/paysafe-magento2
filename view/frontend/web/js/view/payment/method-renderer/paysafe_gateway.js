@@ -124,6 +124,7 @@ define(
               }
             }, function (deviceFingerprintingId, error) {
               if(typeof deviceFingerprintingId === 'undefined') {
+                fullScreenLoader.stopLoader();
                 alert(error.detailedMessage);
                 return;
               }
