@@ -88,11 +88,8 @@ class Threedauthentication extends Action
                 'authenticationPurpose' => 'PAYMENT_TRANSACTION',
             ],
         ];
-        try {
             $response = $client->request('POST', $url, $options);
-        } catch (\Exception $exception) {
-            $response = $exception->getResponse();
-        }
+
 
         $bodyContent = $response->getBody()->getContents();
         $object = json_decode($bodyContent, true);
@@ -138,17 +135,13 @@ class Threedauthentication extends Action
                 $url = 'https://api.paysafe.com/cardpayments/v1/accounts/' . $this->helper->getAccountNumber() . '/auths';
             }
 
-            try {
                 $response = $client->request('POST', $url, $options);
                 $this->logger->debug('3ds v2' . $response->getBody()->getContents());
                 $response = json_decode($response->getBody()->getContents());
                 $jsonResult = new \stdClass();
                 $jsonResult->status = 'threed2completed';
                 $jsonResult->dataLoad = $response;
-            } catch (\Exception $exception) {
-                $response = $exception->getResponse();
-                $response = $response->getBody()->getContents();
-            }
+
         }
 
         $json->setData(json_encode($jsonResult));
