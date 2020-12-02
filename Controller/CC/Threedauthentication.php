@@ -33,12 +33,14 @@ class Threedauthentication extends Action
         Data $helper,
         UrlInterface $url,
         QuoteRepository $quoteRepository,
+        \Paysafe\Payment\Model\Logger $logger,
         ClientFactory $clientInterfaceFactory
     )
     {
         $this->quoteRepository = $quoteRepository;
         $this->url = $url;
         $this->helper = $helper;
+        $this->logger = $logger;
         $this->clientInterfaceFactory = $clientInterfaceFactory;
         parent::__construct($context);
     }
@@ -138,6 +140,7 @@ class Threedauthentication extends Action
 
             try {
                 $response = $client->request('POST', $url, $options);
+                $this->logger->debug('3ds v2' . $response->getBody()->getContents());
                 $response = json_decode($response->getBody()->getContents());
                 $jsonResult = new \stdClass();
                 $jsonResult->status = 'threed2completed';
