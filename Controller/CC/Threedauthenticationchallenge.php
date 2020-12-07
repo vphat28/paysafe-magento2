@@ -98,11 +98,14 @@ class Threedauthenticationchallenge extends Action {
             ],
             "authentication" => [
                 "eci"                 => $authResponse["eci"],
-                "cavv"                => $authResponse["cavv"],
                 "threeDResult"        => "Y",
                 "threeDSecureVersion" => "2.1.0",
             ],
         ];
+
+        if (isset($authResponse['cavv'])) {
+            $options['json']['authentication']['cavv'] = $authResponse['cavv'];
+        }
         // 3ds 2 completed, authorize payment
         if ($this->helper->isTestMode()) {
             $url = 'https://api.test.paysafe.com/cardpayments/v1/accounts/' . $this->helper->getAccountNumber() . '/auths';

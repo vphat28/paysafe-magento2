@@ -197,7 +197,13 @@ define(
                                         alert('Error in 3DS version 2');
                                         fullScreenLoader.stopLoader();
                                     }
-                                });
+                                })
+                                .error(function (data) {
+                                    alert('Gateway error: ' + data.statusText);
+                                    console.log(data);
+                                    fullScreenLoader.stopLoader();
+                                })
+                            ;
                         });
                     }
 

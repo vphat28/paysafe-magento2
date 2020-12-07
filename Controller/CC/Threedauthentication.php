@@ -125,12 +125,17 @@ class Threedauthentication extends Action {
                     "cardNum"    => $request['card']['cardNum'],
                 ],
                 "authentication" => [
-                    "eci"                 => $object["eci"],
-                    "cavv"                => $object["cavv"],
+                    "eci"                 => $object["eci"], 
                     "threeDResult"        => "Y",
                     "threeDSecureVersion" => "2.1.0",
                 ],
             ];
+
+
+
+            if (isset($object['cavv'])) {
+                $options['json']['authentication']['cavv'] = $object['cavv'];
+            }
             // 3ds 2 completed, authorize payment
             if ($this->helper->isTestMode()) {
                 $url = 'https://api.test.paysafe.com/cardpayments/v1/accounts/' . $this->helper->getAccountNumber() . '/auths';
