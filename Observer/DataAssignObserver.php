@@ -36,7 +36,11 @@ class DataAssignObserver extends AbstractDataAssignObserver
             return;
         }
 
-        foreach (['ccNumber', 'ccMonth', 'ccYear', 'ccCVN', 'accordDChoice', 'accordDType', 'accordDGracePeriod', 'accordDPlanNumber', 'completedTxnId'] as $key) {
+        foreach (['ccNumber', 'ccMonth', 'ccYear', 'ccCVN', 'accordDChoice', 'accordDType', 'accordDGracePeriod', 'accordDPlanNumber',
+            'completedTxnId',
+            'eci',
+            'cavv',
+            ] as $key) {
             if (isset($additionalData[$key])) {
                 $this->dataProvider->setAdditionalData($key, $additionalData[$key]);
             }

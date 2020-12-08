@@ -22,6 +22,8 @@ define(
                 template: 'Paysafe_Payment/payment/form',
                 transactionResult: '',
                 completedTxnId: '',
+                eci: '',
+                cavv: '',
                 accordDChoice: '',
                 accordDType: '',
                 accordDGracePeriod: '',
@@ -106,19 +108,13 @@ define(
                     dataType: "json",
                     data: {
                         "id": id,
-                        "card": {
-                            "cardExpiry": {
-                                "month": self.creditCardExpMonth(),
-                                "year": self.creditCardExpYear()
-                            },
-                            "cardNum": self.creditCardNumber()
-                        },
                     }
                 })
                     .done(function (data) {
                         data = JSON.parse(data);
                         if (data.status === 'threed2completed') {
-                            self.completedTxnId = data.dataLoad.id;
+                            self.eci = data.dataLoad.eci;
+                            self.cavv = data.dataLoad.cavv;
                             return self.placeOrder();
                         } else {
                             alert('Error in 3DS version 2');
@@ -182,7 +178,9 @@ define(
                                     data = JSON.parse(data);
                                     console.log(data);
                                     if (data.status === 'threed2completed') {
-                                        self.completedTxnId = data.dataLoad.id;
+                                        self.cavv = data.dataLoad.cavv;
+                                        self.eci = data.dataLoad.eci;
+
                                         return self.placeOrder();
                                     } else if (data.status === 'threed2pending') {
                                         paysafe3ds.threedsecure.challenge(window.checkoutConfig.payment.paysafe_gateway.base64apikey, {
@@ -229,6 +227,8 @@ define(
                         'ccNumber': this.creditCardNumber(),
                         'ccMonth': this.creditCardExpMonth(),
                         'completedTxnId': this.completedTxnId,
+                        'eci': this.eci,
+                        'cavv': this.cavv,
                         'ccYear': this.creditCardExpYear(),
                         'accordDChoice': this.accordDChoice(),
                         'accordDType': this.accordDType(),

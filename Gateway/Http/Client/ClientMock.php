@@ -22,8 +22,7 @@ use Paysafe\ThreeDSecure\ThreeDEnrollment;
 use GuzzleHttp\ClientFactory;
 use GuzzleHttp\Client;
 
-class ClientMock implements ClientInterface
-{
+class ClientMock implements ClientInterface {
     const SUCCESS = 1;
     const FAILURE = 0;
 
@@ -60,25 +59,25 @@ class ClientMock implements ClientInterface
         StoreManagerInterface $storeManager
     ) {
         $this->clientFactory = $clientFactory;
-        $this->logger = $logger;
-        $this->helper = $helper;
+        $this->logger        = $logger;
+        $this->helper        = $helper;
         $this->paysafeClient = $paysafeClient;
-        $this->dataProvider = $dataProvider;
-        $this->url = $url;
-        $this->storeManager = $storeManager;
+        $this->dataProvider  = $dataProvider;
+        $this->url           = $url;
+        $this->storeManager  = $storeManager;
     }
 
     /**
      * @param TransferInterface $transferObject
+     *
      * @return array|mixed
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Paysafe\PaysafeException
      */
-    public function placeRequest(TransferInterface $transferObject)
-    {
+    public function placeRequest(TransferInterface $transferObject) {
         $body = $transferObject->getBody();
 
-        if (!empty($this->dataProvider->getAdditionalData('completedTxnId'))) {
+        if ( ! empty($this->dataProvider->getAdditionalData('completedTxnId'))) {
             return $this->proceedCompletedPayment($body);
         }
 
@@ -106,70 +105,88 @@ class ClientMock implements ClientInterface
         $threeDSecureMode = $this->helper->threedsecureMode();
 
         /** @var Order $order */
-        $order = $body['ORDER'];
+        $order          = $body['ORDER'];
         $billingAddress = $order->getBillingAddress();
 
         $authParams = array(
             'merchantRefNum' => $body['INVOICE'],
-            'amount' => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
+            'amount'         => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
             'settleWithAuth' => $capture,
-            'profile' => [
+            'profile'        => [
                 'firstName' => $billingAddress->getFirstname(),
-                'lastName' => $billingAddress->getLastname(),
-                'email' => $billingAddress->getEmail(),
+                'lastName'  => $billingAddress->getLastname(),
+                'email'     => $billingAddress->getEmail(),
             ],
-            'customerIp' => $_SERVER['REMOTE_ADDR'],
-            'card' => array(
-                'cardNum' => $this->dataProvider->getAdditionalData('ccNumber'),
-                'cvv' => $this->dataProvider->getAdditionalData('ccCVN'),
+            'customerIp'     => $_SERVER['REMOTE_ADDR'],
+            'card'           => array(
+                'cardNum'    => $this->dataProvider->getAdditionalData('ccNumber'),
+                'cvv'        => $this->dataProvider->getAdditionalData('ccCVN'),
                 'cardExpiry' => array(
                     'month' => $this->dataProvider->getAdditionalData('ccMonth'),
-                    'year' => $this->dataProvider->getAdditionalData('ccYear')
+                    'year'  => $this->dataProvider->getAdditionalData('ccYear')
                 )
             ),
             'billingDetails' => [
-                "zip" => $body['POSTCODE'],
-                "street" => implode('', $billingAddress->getStreet()),
-                "city" => $billingAddress->getCity(),
-                "state" => $billingAddress->getRegionCode(),
+                "zip"     => $body['POSTCODE'],
+                "street"  => implode('', $billingAddress->getStreet()),
+                "city"    => $billingAddress->getCity(),
+                "state"   => $billingAddress->getRegionCode(),
                 "country" => $billingAddress->getCountryId(),
-                "phone" => $billingAddress->getTelephone(),
+                "phone"   => $billingAddress->getTelephone(),
             ],
         );
 
         $this->logger->debug('Authorization request', $authParams);
 
-        if (!empty($this->dataProvider->getAdditionalData('accordDChoice'))) {
+        if ( ! empty($this->dataProvider->getAdditionalData('accordDChoice'))) {
             $authParams['accordD'] = [
-                'financingType' => $this->dataProvider->getAdditionalData('accordDType') === '1' ? 'DEFERRED_PAYMENT' : 'EQUAL_PAYMENT',
-                'plan' => $this->dataProvider->getAdditionalData('accordDPlanNumber'),
+                'financingType'                                                                         => $this->dataProvider->getAdditionalData('accordDType') === '1' ? 'DEFERRED_PAYMENT' : 'EQUAL_PAYMENT',
+                'plan'                                                                                  => $this->dataProvider->getAdditionalData('accordDPlanNumber'),
                 $this->dataProvider->getAdditionalData('accordDType') === '1' ? 'gracePeriod' : 'terms' => $this->dataProvider->getAdditionalData('accordDGracePeriod'),
             ];
         }
 
-        if ($threeDSecureMode > 0) {
-            $hash = hash('crc32', $this->url->getBaseUrl());
+        if ( ! empty($this->dataProvider->getAdditionalData('eci'))) {
+            $authParams['authentication'] = [
+                "eci"                 => $this->dataProvider->getAdditionalData('eci'),
+                "threeDResult"        => "Y",
+                "threeDSecureVersion" => "2.1.0",
+            ];
+
+            if ( ! empty($this->dataProvider->getAdditionalData('cavv'))) {
+                $authParams['authentication']['cavv'] = $this->dataProvider->getAdditionalData('cavv');
+            }
+        }
+
+        if ($threeDSecureMode === 2) {
+            if (empty($this->dataProvider->getAdditionalData('eci'))) {
+                throw new LocalizedException(__('Not 3DS transaction'));
+            }
+        }
+
+        if ($threeDSecureMode === 1) {
+            $hash             = hash('crc32', $this->url->getBaseUrl());
             $enrollmentChecks = $client->threeDSecureService()->enrollmentChecks(new ThreeDEnrollment(array(
                 'merchantRefNum' => $hash . time() . "-enrollmentchecks",
-                'amount' => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
-                'currency' => strtoupper($body['CURRENCY']),
-                'card' => array(
-                    'cardNum' => $this->dataProvider->getAdditionalData('ccNumber'),
-                    'cvv' => $this->dataProvider->getAdditionalData('ccCVN'),
+                'amount'         => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
+                'currency'       => strtoupper($body['CURRENCY']),
+                'card'           => array(
+                    'cardNum'    => $this->dataProvider->getAdditionalData('ccNumber'),
+                    'cvv'        => $this->dataProvider->getAdditionalData('ccCVN'),
                     'cardExpiry' => array(
                         'month' => $this->dataProvider->getAdditionalData('ccMonth'),
-                        'year' => $this->dataProvider->getAdditionalData('ccYear')
+                        'year'  => $this->dataProvider->getAdditionalData('ccYear')
                     )
                 ),
-                'customerIp' => $_SERVER['REMOTE_ADDR'],
-                'userAgent' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : $_SERVER['REMOTE_ADDR'],
-                'acceptHeader' => "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                'merchantUrl' => $this->url->getBaseUrl()
+                'customerIp'     => $_SERVER['REMOTE_ADDR'],
+                'userAgent'      => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : $_SERVER['REMOTE_ADDR'],
+                'acceptHeader'   => "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                'merchantUrl'    => $this->url->getBaseUrl()
             )))->jsonSerialize();
 
             if (isset($enrollmentChecks['threeDEnrollment']) && $enrollmentChecks['threeDEnrollment'] === 'Y') {
-                $response = $enrollmentChecks;
-                $response['TXN_TYPE'] = 'A_3DS';
+                $response                = $enrollmentChecks;
+                $response['TXN_TYPE']    = 'A_3DS';
                 $response['auth_params'] = json_encode($authParams);
 
                 return $response;
@@ -193,8 +210,7 @@ class ClientMock implements ClientInterface
         }
     }
 
-    private function proceedCompletedPayment($body)
-    {
+    private function proceedCompletedPayment($body) {
         /** @var Client $client */
         $client = $this->clientFactory->create();
 
@@ -207,11 +223,11 @@ class ClientMock implements ClientInterface
         $response = $client->get($url, [
             'headers' => [
                 'Authorization' => 'Basic ' . base64_encode($this->helper->getAPIUsername() . ':' . $this->helper->getAPIPassword()),
-                'Content-type' => 'application/json',
+                'Content-type'  => 'application/json',
             ],
         ]);
 
-        $response = json_decode($response->getBody()->getContents(), true);
+        $response             = json_decode($response->getBody()->getContents(), true);
         $response['TXN_TYPE'] = 'S';
 
         return $response;
@@ -219,25 +235,25 @@ class ClientMock implements ClientInterface
 
     /**
      * @param $body
+     *
      * @return array|Settlement
      * @throws LocalizedException
      * @throws PaysafeException
      */
-    private function placeCaptureOnly($body)
-    {
+    private function placeCaptureOnly($body) {
         /** @var Order $order */
         $order = $body['ORDER'];
         $this->helper->initPaysafeSDK();
         $client = $this->paysafeClient->getClient($order->getStore());
 
         try {
-        $response = $client->cardPaymentService()->settlement(new Settlement(array(
-            'merchantRefNum' => $order->getIncrementId(),
-            'authorizationID' => $order->getPayment()->getAdditionalInformation('paysafe_txn_id'),
-            'status' => 'COMPLETED',
-            'availableToRefund' => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
-            'amount' => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
-        )));
+            $response = $client->cardPaymentService()->settlement(new Settlement(array(
+                'merchantRefNum'    => $order->getIncrementId(),
+                'authorizationID'   => $order->getPayment()->getAdditionalInformation('paysafe_txn_id'),
+                'status'            => 'COMPLETED',
+                'availableToRefund' => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
+                'amount'            => $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']),
+            )));
         } catch (RequestConflictException $exception) {
             if ($exception->getCode() === 5031) {
                 return ['id' => $order->getPayment()->getAdditionalInformation('paysafe_txn_id')];
@@ -252,56 +268,56 @@ class ClientMock implements ClientInterface
 
     /**
      * @param $body
+     *
      * @return array
      * @throws LocalizedException
      * @throws PaysafeException
      */
-    private function placeRefundOnly($body)
-    {
+    private function placeRefundOnly($body) {
         /** @var Order $order */
         $order = $body['ORDER'];
         $this->helper->initPaysafeSDK();
         $payment = $order->getPayment();
-        $store = $order->getStore();
-        $txnId = $payment->getAdditionalInformation('paysafe_settlement_txn_id');
-        $client = $this->paysafeClient->getClient($store);
+        $store   = $order->getStore();
+        $txnId   = $payment->getAdditionalInformation('paysafe_settlement_txn_id');
+        $client  = $this->paysafeClient->getClient($store);
 
-    
-            $refundParams = array(
-                'merchantRefNum' => $order->getIncrementId(),
-                'dupCheck' => false,
-                'settlementID' => $txnId,
-            );
 
-            if (!empty($body['AMOUNT'])) {
-                $refundParams['amount'] = $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']);
-            }
+        $refundParams = array(
+            'merchantRefNum' => $order->getIncrementId(),
+            'dupCheck'       => false,
+            'settlementID'   => $txnId,
+        );
 
-            $this->logger->debug('refunding ' . json_encode($refundParams));
+        if ( ! empty($body['AMOUNT'])) {
+            $refundParams['amount'] = $body['AMOUNT'] * $this->helper->getCurrencyMultiplier($body['CURRENCY']);
+        }
 
-            $response = $client->cardPaymentService()->refund(new Refund($refundParams));
+        $this->logger->debug('refunding ' . json_encode($refundParams));
+
+        $response = $client->cardPaymentService()->refund(new Refund($refundParams));
 
         return $response->jsonSerialize();
     }
 
     /**
      * @param $body
+     *
      * @return array
      * @throws LocalizedException
      * @throws PaysafeException
      */
-    private function placeCancelOnly($body)
-    {
+    private function placeCancelOnly($body) {
         /** @var Order $order */
         $order = $body['ORDER'];
         $this->helper->initPaysafeSDK();
         $payment = $order->getPayment();
-        $txnId = $payment->getAdditionalInformation('paysafe_txn_id');
-        $client = $this->paysafeClient->getClient($order->getStore());
+        $txnId   = $payment->getAdditionalInformation('paysafe_txn_id');
+        $client  = $this->paysafeClient->getClient($order->getStore());
 
         try {
             $authReversal = new AuthorizationReversal(array(
-                'merchantRefNum' => $order->getIncrementId(),
+                'merchantRefNum'  => $order->getIncrementId(),
                 'authorizationID' => $txnId
             ));
 

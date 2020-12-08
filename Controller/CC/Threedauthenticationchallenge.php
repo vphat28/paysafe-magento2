@@ -106,17 +106,10 @@ class Threedauthenticationchallenge extends Action {
         if (isset($authResponse['cavv'])) {
             $options['json']['authentication']['cavv'] = $authResponse['cavv'];
         }
-        // 3ds 2 completed, authorize payment
-        if ($this->helper->isTestMode()) {
-            $url = 'https://api.test.paysafe.com/cardpayments/v1/accounts/' . $this->helper->getAccountNumber() . '/auths';
-        } else {
-            $url = 'https://api.paysafe.com/cardpayments/v1/accounts/' . $this->helper->getAccountNumber() . '/auths';
-        }
 
-        $response             = $this->simplePost($url, $authHeader, json_encode($options['json']));
         $jsonResult           = new \stdClass();
         $jsonResult->status   = 'threed2completed';
-        $jsonResult->dataLoad = json_decode($response, true);
+        $jsonResult->dataLoad = $options['json']['authentication'];
         $json->setData(json_encode($jsonResult));
 
         return $json;
