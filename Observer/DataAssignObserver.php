@@ -39,6 +39,7 @@ class DataAssignObserver extends AbstractDataAssignObserver
         foreach (['ccNumber', 'ccMonth', 'ccYear', 'ccCVN', 'accordDChoice', 'accordDType', 'accordDGracePeriod', 'accordDPlanNumber',
             'completedTxnId',
             'eci',
+            'threed_id',
             'cavv',
             ] as $key) {
             if (isset($additionalData[$key])) {

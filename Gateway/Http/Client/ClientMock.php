@@ -146,12 +146,23 @@ class ClientMock implements ClientInterface {
             ];
         }
 
-        if ( ! empty($this->dataProvider->getAdditionalData('eci'))) {
-            $authParams['authentication'] = [
-                "eci"                 => $this->dataProvider->getAdditionalData('eci'),
-                "threeDResult"        => "Y",
-                "threeDSecureVersion" => "2.1.0",
-            ];
+        if ( ! empty($this->dataProvider->getAdditionalData('threed_id'))) {
+            /** @var Order $order */
+            $order = $body['ORDER'];
+            $quoteId = $order->getQuoteId();
+            $auth3dID = $this->dataProvider->getAdditionalData('threed_id');
+
+            $authResponse = $this->helper->getThreeDResult($auth3dID);
+
+            $merchantRefNum = $authResponse['merchantRefNum'];
+            $merchantRefNum = explode('-', $merchantRefNum);
+
+            if (!isset($merchantRefNum[1]) || $merchantRefNum[1] != $quoteId) {
+                throw new LocalizedException(__('Cheat!'));
+            }
+
+            $authParams['authentication']['xid'] = $auth3dID;
+            $authParams['authentication']['eci'] = $authResponse['eci']; 
 
             if ( ! empty($this->dataProvider->getAdditionalData('cavv'))) {
                 $authParams['authentication']['cavv'] = $this->dataProvider->getAdditionalData('cavv');
@@ -159,7 +170,7 @@ class ClientMock implements ClientInterface {
         }
 
         if ($threeDSecureMode === 2) {
-            if (empty($this->dataProvider->getAdditionalData('eci'))) {
+            if (empty($this->dataProvider->getAdditionalData('threed_id'))) {
                 throw new LocalizedException(__('Not 3DS transaction'));
             }
         }

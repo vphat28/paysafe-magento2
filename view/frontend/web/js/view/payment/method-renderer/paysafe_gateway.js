@@ -24,6 +24,7 @@ define(
                 completedTxnId: '',
                 eci: '',
                 cavv: '',
+                threed_id: '',
                 accordDChoice: '',
                 accordDType: '',
                 accordDGracePeriod: '',
@@ -113,8 +114,10 @@ define(
                     .done(function (data) {
                         data = JSON.parse(data);
                         if (data.status === 'threed2completed') {
+                            fullScreenLoader.stopLoader();
                             self.eci = data.dataLoad.eci;
                             self.cavv = data.dataLoad.cavv;
+                            self.threed_id = data.dataLoad.id;
                             return self.placeOrder();
                         } else {
                             alert('Error in 3DS version 2');
@@ -179,6 +182,7 @@ define(
                                     console.log(data);
                                     if (data.status === 'threed2completed') {
                                         self.cavv = data.dataLoad.cavv;
+                                        self.threed_id = data.dataLoad.id;
                                         self.eci = data.dataLoad.eci;
 
                                         return self.placeOrder();
@@ -229,6 +233,7 @@ define(
                         'completedTxnId': this.completedTxnId,
                         'eci': this.eci,
                         'cavv': this.cavv,
+                        'threed_id': this.threed_id,
                         'ccYear': this.creditCardExpYear(),
                         'accordDChoice': this.accordDChoice(),
                         'accordDType': this.accordDType(),

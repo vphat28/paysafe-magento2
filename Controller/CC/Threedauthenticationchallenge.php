@@ -80,22 +80,10 @@ class Threedauthenticationchallenge extends Action {
         if (!isset($merchantRefNum[1]) || $merchantRefNum[1] != $quote->getId()) {
           return $json;
         }
-        $billingAddress = $quote->getBillingAddress();
-        $authHeader      = 'Basic ' . base64_encode($this->helper->getAPIUsername() . ':' . $this->helper->getAPIPassword());
+
+        $this->logger->debug('3ds authentication result', $authResponse);
+
         $options['json'] = [
-            'merchantRefNum' => $quote->getQuoteCurrencyCode() . '-' . $quote->getId() . time(),
-            "amount"         => $quote->getGrandTotal() * 100,
-            "settleWithAuth" => true,
-            "billingDetails" => [
-                "zip" => $billingAddress->getPostcode()
-            ],
-            'card'           => [
-                "cardExpiry" => [
-                    "month" => $request['card']['cardExpiry']['month'],
-                    "year"  => $request['card']['cardExpiry']['year']
-                ],
-                "cardNum"    => $request['card']['cardNum'],
-            ],
             "authentication" => [
                 "eci"                 => $authResponse["eci"],
                 "threeDResult"        => "Y",
@@ -106,6 +94,8 @@ class Threedauthenticationchallenge extends Action {
         if (isset($authResponse['cavv'])) {
             $options['json']['authentication']['cavv'] = $authResponse['cavv'];
         }
+
+        $options['json']['authentication']['id'] = $authResponse['id'];
 
         $jsonResult           = new \stdClass();
         $jsonResult->status   = 'threed2completed';

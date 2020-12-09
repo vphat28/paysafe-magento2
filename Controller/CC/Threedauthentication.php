@@ -137,10 +137,23 @@ class Threedauthentication extends Action {
                 $options['json']['authentication']['cavv'] = $object['cavv'];
             }
 
+            $options['json']['authentication']['id'] = $object['id'];
+
             $jsonResult           = new \stdClass();
             $jsonResult->status   = 'threed2completed';
             $jsonResult->dataLoad = $options['json']['authentication'];
 
+        }
+
+        if (
+            $object["status"] === 'COMPLETED' &&
+            version_compare($object['threeDSecureVersion'], '2.0') < 0
+        ) {
+            $jsonResult           = new \stdClass();
+            $jsonResult->status   = 'threed2completed';
+            $jsonResult->dataLoad = [
+                'id' => $object['id']
+            ];
         }
 
         if (isset($object["threeDResult"]) &&
