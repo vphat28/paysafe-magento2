@@ -71,7 +71,10 @@ class Data
 
     public function getSingleUseToken($store = null)
     {
-        return $this->encryptor->decrypt($this->scopeConfig->getValue('payment/paysafe_gateway/single_use_token', ScopeInterface::SCOPE_STORE, $store));
+        return
+            $this->encryptor->decrypt($this->scopeConfig->getValue('payment/paysafe_gateway/single_use_token_username', ScopeInterface::SCOPE_STORE, $store)) .
+            ':' .
+            $this->encryptor->decrypt($this->scopeConfig->getValue('payment/paysafe_gateway/single_use_token_password', ScopeInterface::SCOPE_STORE, $store));
     }
 
     public function initPaysafeSDK()
