@@ -156,6 +156,17 @@ class Threedauthentication extends Action {
             ];
         }
 
+        if (
+            $object["status"] === 'PENDING' &&
+            version_compare($object['threeDSecureVersion'], '2.0') < 0 &&
+            $object["threeDEnrollment"] == 'Y'
+        ) {
+
+            $jsonResult = new \stdClass();
+            $jsonResult->status   = 'threed2pending';
+            $jsonResult->three_d_auth = $object;
+        }
+
         if (isset($object["threeDResult"]) &&
             $object["status"] === 'PENDING' &&
             $object["threeDResult"] === 'C' &&

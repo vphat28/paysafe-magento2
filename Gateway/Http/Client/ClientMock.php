@@ -161,6 +161,18 @@ class ClientMock implements ClientInterface {
                 throw new LocalizedException(__('Cheat!'));
             }
 
+            if (
+                $authResponse["status"] === 'PENDING' &&
+                version_compare($authResponse['threeDSecureVersion'], '2.0') < 0 &&
+                $authResponse["threeDEnrollment"] == 'Y'
+            ) {
+                $response                = $authResponse;
+                $response['TXN_TYPE']    = 'A_3DS';
+                $response['auth_params'] = json_encode($authParams);
+
+                return $response;
+            }
+
             $authParams['authentication']['xid'] = $auth3dID;
             $authParams['authentication']['eci'] = $authResponse['eci']; 
 
