@@ -4,6 +4,8 @@ namespace Paysafe\Payment\Controller\Cc;
 
 use GuzzleHttp\ClientFactory;
 use GuzzleHttp\Client;
+use Magento\Customer\Model\Authorization\CustomerSessionUserContext;
+use Magento\Customer\Model\CustomerFactory;
 use Magento\Framework\App\Action\Action;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
@@ -36,6 +38,8 @@ class Threedauthentication extends Action {
         QuoteRepository $quoteRepository,
         \Paysafe\Payment\Model\Logger $logger,
         \Magento\Checkout\Model\Session $checkoutSession,
+        CustomerSessionUserContext $customer_session_user_context,
+        CustomerFactory $customer_factory,
         ClientFactory $clientInterfaceFactory
     ) {
         $this->quoteRepository        = $quoteRepository;
@@ -44,6 +48,8 @@ class Threedauthentication extends Action {
         $this->logger                 = $logger;
         $this->checkoutSession        = $checkoutSession;
         $this->clientInterfaceFactory = $clientInterfaceFactory;
+        $this->customer_factory       = $customer_factory;
+        $this->customer_session_user_context = $customer_session_user_context;
         parent::__construct($context);
     }
 
@@ -52,7 +58,6 @@ class Threedauthentication extends Action {
      */
     public function execute() {
         $request = $this->getRequest()->getParams();
-
         if ($this->helper->isTestMode()) {
             $url = 'https://api.test.paysafe.com/threedsecure/v2/accounts/' . $this->helper->getAccountNumber() . '/authentications';
         } else {
@@ -66,6 +71,21 @@ class Threedauthentication extends Action {
         $billingAddress = $quote->getBillingAddress();
         /** @var ClientInterface $client */
         $client   = $this->clientInterfaceFactory->create();
+
+        if (isset($request['card']['token']) && !empty($request['card']['token'])) {
+            $cardParams = [
+                "paymentToken" => $request['card']['token'],
+            ];
+        } else {
+            $cardParams = [
+                "cardExpiry" => [
+                    "month" => $request['card']['cardExpiry']['month'],
+                    "year"  => $request['card']['cardExpiry']['year']
+                ],
+                "cardNum"    => $request['card']['cardNum'],
+                "holderName" => $billingAddress->getFirstname() . ' ' . $billingAddress->getLastname(),
+            ];
+        }
         $options  = [
             'headers' => [
                 'Authorization' => 'Basic ' . base64_encode($this->helper->getSingleUseToken()),
@@ -75,14 +95,7 @@ class Threedauthentication extends Action {
                 'currency'               => $quote->getQuoteCurrencyCode(),
                 'merchantRefNum'         => $quote->getQuoteCurrencyCode() . '-' . $quote->getId() . '-' . time(),
                 'merchantUrl'            => $this->url->getBaseUrl(),
-                'card'                   => [
-                    "cardExpiry" => [
-                        "month" => $request['card']['cardExpiry']['month'],
-                        "year"  => $request['card']['cardExpiry']['year']
-                    ],
-                    "cardNum"    => $request['card']['cardNum'],
-                    "holderName" => $billingAddress->getFirstname() . ' ' . $billingAddress->getLastname(),
-                ],
+                'card'                   => $cardParams,
                 'deviceFingerprintingId' => $request['deviceFingerprintingId'],
                 'deviceChannel'          => 'BROWSER',
                 'messageCategory'        => 'PAYMENT',

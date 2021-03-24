@@ -38,6 +38,9 @@ class DataAssignObserver extends AbstractDataAssignObserver
 
         foreach (['ccNumber', 'ccMonth', 'ccYear', 'ccCVN', 'accordDChoice', 'accordDType', 'accordDGracePeriod', 'accordDPlanNumber',
             'completedTxnId',
+            'saveTheCard',
+            'selectedMethod',
+            'cardPaymentToken',
             'eci',
             'threed_id',
             'cavv',

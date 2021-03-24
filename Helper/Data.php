@@ -24,6 +24,12 @@ class Data
         return $this->scopeConfig->isSetFlag('payment/paysafe_gateway/active', ScopeInterface::SCOPE_STORE, $store);
     }
 
+
+    public function isPaysafeSavedCardActive($store = null)
+    {
+        return $this->scopeConfig->isSetFlag('payment/paysafe_gateway/active_saved_card', ScopeInterface::SCOPE_STORE, $store);
+    }
+
     public function isEnableAccordD($store = null)
     {
         return $this->scopeConfig->isSetFlag('payment/paysafe_gateway/enable_accordD', ScopeInterface::SCOPE_STORE, $store);

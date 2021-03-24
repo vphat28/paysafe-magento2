@@ -29,42 +29,17 @@
           data-bind="mageInit: {'validation':{}}">
       <!-- ko if: (hasSavedCards())-->
       <div>
-        <input id="payment_method_cc"
-               class="input-radio"
-               name="mer_paysafe_payment_method"
-               value="mer_paysafe_credit_card"
-               type="radio"
-               data-bind="checked: selectedMethod"
+        <input id="payment_method_cc" class="input-radio" name="mer_paysafe_payment_method"
+               value="mer_paysafe_credit_card" data-order_button_text="" type="radio"
                onclick="">
-        <label for="payment_method_cc" style="margin-right: 1.5em;"><!-- ko i18n: 'Credit Card'--><!-- /ko --></label>
+        <label for="payment_method_cc"><!-- ko i18n: 'Credit Card'--><!-- /ko --></label>
         <input id="payment_method_token" class="input-radio" name="mer_paysafe_payment_method"
                value="mer_paysafe_credit_card_token" data-order_button_text="" type="radio"
-               data-bind="checked: selectedMethod"
                onclick="">
         <label for="payment_method_token"><!-- ko i18n: 'Saved Cards'--><!-- /ko --></label>
       </div>
-      <div class="paysafe-token-section" data-bind="visible: selectedMethod() == 'mer_paysafe_credit_card_token'">
-        <table border="1" style="margin-top: 1.5em;">
-          <tr>
-            <th><!-- ko i18n: 'Select'--><!-- /ko --></th>
-            <th><!-- ko i18n: 'Cards'--><!-- /ko --></th>
-            <th><!-- ko i18n: 'Date'--><!-- /ko --></th>
-          </tr>
-          <!-- ko foreach: { data: getSaveCards(), as: 'item' } -->
-          <tr>
-            <td>
-              <input class="save_card_number" type="radio"
-                     name="paysafe_token_number"
-                     data-bind="value: item.tokenkey, checked: $parent.selectedToken"></td>
-            <td data-bind="text: item.storecc"></td>
-            <td data-bind="text: item.paysafe_date_of_card_used"></td>
-          </tr>
-          <!-- /ko -->
-        </table>
-        <br>
-      </div>
       <!-- /ko -->
-      <div class="paysafe-cc-section" data-bind="visible: selectedMethod() == 'mer_paysafe_credit_card'">
+      <div class="paysafe-cc-section">
         <!-- ko template: 'Magento_Payment/payment/cc-form' --><!-- /ko -->
         <fieldset class="fieldset payment items ccard paysafe_gateway" data-bind="visible: isEnableAccordD()">
           <div class="field accordd_choice number required">
@@ -135,20 +110,22 @@
             </div>
           </div>
 
-
-        </fieldset>
-        <!-- ko if: (isStoredCardEnable())-->
-        <div class="field choice">
-          <input type="checkbox"
-                 name="vault[is_enabled]"
-                 class="checkbox"
-                 data-bind="attr: {'id': getCode() + '_enable_vault'},
+          <!-- ko if: (isStoredCardEnable())-->
+          <div class="field choice">
+            <input type="checkbox"
+                   name="vault[is_enabled]"
+                   class="checkbox"
+                   data-bind="attr: {'id': getCode() + '_enable_vault'},
                        staticChecked: saveTheCard"/>
-          <label class="label" data-bind="attr: {'for': getCode() + '_enable_vault'}">
-            <span><!-- ko i18n: 'Save for later use.'--><!-- /ko --></span>
-          </label>
-        </div>
-        <!-- /ko -->
+            <label class="label" data-bind="attr: {'for': getCode() + '_enable_vault'}">
+              <span><!-- ko i18n: 'Save for later use.'--><!-- /ko --></span>
+            </label>
+          </div>
+          <!-- /ko -->
+        </fieldset>
+      </div>
+      <div class="paysafe-cc-token-section">
+        saved cards
       </div>
     </form>
     <div class="checkout-agreements-block">

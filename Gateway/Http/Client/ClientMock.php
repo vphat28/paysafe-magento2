@@ -2,6 +2,7 @@
 
 namespace Paysafe\Payment\Gateway\Http\Client;
 
+use Magento\Customer\Model\Authorization\CustomerSessionUserContext;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\UrlInterface;
 use Magento\Payment\Gateway\Http\ClientInterface;
@@ -12,17 +13,20 @@ use Magento\Sales\Model\Order;
 use Paysafe\CardPayments\AuthorizationReversal;
 use Paysafe\CardPayments\Refund;
 use Paysafe\CardPayments\Settlement;
+use Paysafe\CardPayments\Authorization;
+use Paysafe\CustomerVault\Profile;
+use Paysafe\CustomerVault\Address;
 use Paysafe\Payment\Helper\Data;
 use Paysafe\Payment\Model\DataProvider;
 use Paysafe\Payment\Model\PaysafeClient;
-use Paysafe\CardPayments\Authorization;
 use Paysafe\PaysafeException;
 use Paysafe\RequestConflictException;
 use Paysafe\ThreeDSecure\ThreeDEnrollment;
 use GuzzleHttp\ClientFactory;
 use GuzzleHttp\Client;
 
-class ClientMock implements ClientInterface {
+class ClientMock implements ClientInterface
+{
     const SUCCESS = 1;
     const FAILURE = 0;
 
@@ -56,15 +60,19 @@ class ClientMock implements ClientInterface {
         DataProvider $dataProvider,
         ClientFactory $clientFactory,
         UrlInterface $url,
+        CustomerSessionUserContext $customer_session_user_context,
+        \Magento\Customer\Model\CustomerFactory $customer_factory,
         StoreManagerInterface $storeManager
     ) {
-        $this->clientFactory = $clientFactory;
-        $this->logger        = $logger;
-        $this->helper        = $helper;
-        $this->paysafeClient = $paysafeClient;
-        $this->dataProvider  = $dataProvider;
-        $this->url           = $url;
-        $this->storeManager  = $storeManager;
+        $this->clientFactory                 = $clientFactory;
+        $this->logger                        = $logger;
+        $this->helper                        = $helper;
+        $this->paysafeClient                 = $paysafeClient;
+        $this->dataProvider                  = $dataProvider;
+        $this->url                           = $url;
+        $this->storeManager                  = $storeManager;
+        $this->customer_factory              = $customer_factory;
+        $this->customer_session_user_context = $customer_session_user_context;
     }
 
     /**
@@ -74,8 +82,10 @@ class ClientMock implements ClientInterface {
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Paysafe\PaysafeException
      */
-    public function placeRequest(TransferInterface $transferObject) {
-        $body = $transferObject->getBody();
+    public function placeRequest(TransferInterface $transferObject)
+    {
+        $body   = $transferObject->getBody();
+        $userId = $this->customer_session_user_context->getUserId();
 
         if ( ! empty($this->dataProvider->getAdditionalData('completedTxnId'))) {
             return $this->proceedCompletedPayment($body);
@@ -105,8 +115,15 @@ class ClientMock implements ClientInterface {
         $threeDSecureMode = $this->helper->threedsecureMode();
 
         /** @var Order $order */
-        $order          = $body['ORDER'];
-        $billingAddress = $order->getBillingAddress();
+        $order             = $body['ORDER'];
+        $billingAddress    = $order->getBillingAddress();
+        $fname             = $billingAddress->getFirstname();
+        $lname             = $billingAddress->getLastname();
+        $billing_address_1 = implode(' ', $billingAddress->getStreet());
+        $cardNumber        = $this->dataProvider->getAdditionalData('ccNumber');
+        $cardMonth         = $this->dataProvider->getAdditionalData('ccMonth');
+        $cardYear          = $this->dataProvider->getAdditionalData('ccYear');
+        $saveTheCard       = $this->dataProvider->getAdditionalData('saveTheCard');
 
         $authParams = array(
             'merchantRefNum' => $body['INVOICE'],
@@ -123,8 +140,8 @@ class ClientMock implements ClientInterface {
                 'cvv'        => $this->dataProvider->getAdditionalData('ccCVN'),
                 'cardExpiry' => array(
                     'month' => $this->dataProvider->getAdditionalData('ccMonth'),
-                    'year'  => $this->dataProvider->getAdditionalData('ccYear')
-                )
+                    'year'  => $this->dataProvider->getAdditionalData('ccYear'),
+                ),
             ),
             'billingDetails' => [
                 "zip"     => $body['POSTCODE'],
@@ -135,6 +152,12 @@ class ClientMock implements ClientInterface {
                 "phone"   => $billingAddress->getTelephone(),
             ],
         );
+
+        if ($this->dataProvider->getAdditionalData('selectedMethod') == 'mer_paysafe_credit_card_token') {
+            $authParams['card'] = [
+                'paymentToken' => $this->dataProvider->getAdditionalData('cardPaymentToken'),
+            ];
+        }
 
         $this->logger->debug('Authorization request', $authParams);
 
@@ -148,8 +171,8 @@ class ClientMock implements ClientInterface {
 
         if ( ! empty($this->dataProvider->getAdditionalData('threed_id'))) {
             /** @var Order $order */
-            $order = $body['ORDER'];
-            $quoteId = $order->getQuoteId();
+            $order    = $body['ORDER'];
+            $quoteId  = $order->getQuoteId();
             $auth3dID = $this->dataProvider->getAdditionalData('threed_id');
 
             $authResponse = $this->helper->getThreeDResult($auth3dID);
@@ -157,7 +180,7 @@ class ClientMock implements ClientInterface {
             $merchantRefNum = $authResponse['merchantRefNum'];
             $merchantRefNum = explode('-', $merchantRefNum);
 
-            if (!isset($merchantRefNum[1]) || $merchantRefNum[1] != $quoteId) {
+            if ( ! isset($merchantRefNum[1]) || $merchantRefNum[1] != $quoteId) {
                 throw new LocalizedException(__('Cheat!'));
             }
 
@@ -174,7 +197,7 @@ class ClientMock implements ClientInterface {
             }
 
             $authParams['authentication']['xid'] = $auth3dID;
-            $authParams['authentication']['eci'] = $authResponse['eci']; 
+            $authParams['authentication']['eci'] = $authResponse['eci'];
 
             if ( ! empty($this->dataProvider->getAdditionalData('cavv'))) {
                 $authParams['authentication']['cavv'] = $this->dataProvider->getAdditionalData('cavv');
@@ -198,13 +221,13 @@ class ClientMock implements ClientInterface {
                     'cvv'        => $this->dataProvider->getAdditionalData('ccCVN'),
                     'cardExpiry' => array(
                         'month' => $this->dataProvider->getAdditionalData('ccMonth'),
-                        'year'  => $this->dataProvider->getAdditionalData('ccYear')
-                    )
+                        'year'  => $this->dataProvider->getAdditionalData('ccYear'),
+                    ),
                 ),
                 'customerIp'     => $_SERVER['REMOTE_ADDR'],
                 'userAgent'      => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : $_SERVER['REMOTE_ADDR'],
                 'acceptHeader'   => "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                'merchantUrl'    => $this->url->getBaseUrl()
+                'merchantUrl'    => $this->url->getBaseUrl(),
             )))->jsonSerialize();
 
             if (isset($enrollmentChecks['threeDEnrollment']) && $enrollmentChecks['threeDEnrollment'] === 'Y') {
@@ -215,8 +238,65 @@ class ClientMock implements ClientInterface {
                 return $response;
             }
         }
-
         try {
+            if ($saveTheCard && ! empty($userId) && $this->dataProvider->getAdditionalData('selectedMethod') == 'mer_paysafe_credit_card') {
+                $profile = $client->customerVaultService()->createProfile(new Profile(array(
+                    "merchantCustomerId" => uniqid('cust-' . date('m/d/Y h:i:s a', time())),
+                    "locale"             => "en_US",
+                    "firstName"          => $fname,
+                    "lastName"           => $lname,
+                    "email"              => $billingAddress->getEmail(),
+                )));
+
+
+                $address      = $client->customerVaultService()->createAddress(new Address(array(
+                    "nickName"  => "home",
+                    'street'    => $billing_address_1,
+                    'city'      => $billingAddress->getCity(),
+                    'country'   => $billingAddress->getCountryId(),
+                    'zip'       => $billingAddress->getPostcode(),
+                    "profileID" => $profile->id,
+                )));
+                $card_request = array(
+                    "nickName"         => "Default Card",
+                    "holderName"       => $fname . ' ' . $lname,
+                    'cardNum'          => $cardNumber,
+                    'cardExpiry'       => array(
+                        'month' => $cardMonth,
+                        'year'  => $cardYear,
+                    ),
+                    'billingAddressId' => $address->id,
+                    "profileID"        => $profile->id,
+                );
+
+                $card = $client->customerVaultService()->createCard(new \Paysafe\CustomerVault\Card(
+                        $card_request
+                    )
+                );
+                $storeCc             = substr( $cardNumber, 0, 4 ) . str_repeat( "*", strlen( $cardNumber ) - 8 ) . substr( $cardNumber, - 4 );
+                $responsearray = array(
+                    'tokenkey'         => $profile->paymentToken,
+                    'cardbin'          => $card->cardBin,
+                    'cardpaymenttoken' => $card->paymentToken,
+                    'cardid'           => $card->id,
+                    'profileid'        => $profile->id,
+                    'storecc'        => $storeCc,
+                    'paysafe_date_of_card_used'        => date( "jS F Y" ),
+                );
+                $customer      = $this->customer_factory->create();
+                $customer->load($userId);
+                $cards = $customer->getData('paysafe_stored_cards');
+
+                if (empty($cards)) {
+                    $cards = [];
+                } else {
+                    $cards = json_decode($cards, true);
+                }
+
+                $cards[] = $responsearray;
+                $customer->setData('paysafe_stored_cards', json_encode($cards));
+                $customer->save();
+            }
             $auth = $client->cardPaymentService()->authorize(new Authorization($authParams));
         } catch (\Exception $exception) {
             throw new LocalizedException(__($exception->getMessage()));
@@ -233,7 +313,8 @@ class ClientMock implements ClientInterface {
         }
     }
 
-    private function proceedCompletedPayment($body) {
+    private function proceedCompletedPayment($body)
+    {
         /** @var Client $client */
         $client = $this->clientFactory->create();
 
@@ -263,7 +344,8 @@ class ClientMock implements ClientInterface {
      * @throws LocalizedException
      * @throws PaysafeException
      */
-    private function placeCaptureOnly($body) {
+    private function placeCaptureOnly($body)
+    {
         /** @var Order $order */
         $order = $body['ORDER'];
         $this->helper->initPaysafeSDK();
@@ -296,7 +378,8 @@ class ClientMock implements ClientInterface {
      * @throws LocalizedException
      * @throws PaysafeException
      */
-    private function placeRefundOnly($body) {
+    private function placeRefundOnly($body)
+    {
         /** @var Order $order */
         $order = $body['ORDER'];
         $this->helper->initPaysafeSDK();
@@ -330,7 +413,8 @@ class ClientMock implements ClientInterface {
      * @throws LocalizedException
      * @throws PaysafeException
      */
-    private function placeCancelOnly($body) {
+    private function placeCancelOnly($body)
+    {
         /** @var Order $order */
         $order = $body['ORDER'];
         $this->helper->initPaysafeSDK();
@@ -341,7 +425,7 @@ class ClientMock implements ClientInterface {
         try {
             $authReversal = new AuthorizationReversal(array(
                 'merchantRefNum'  => $order->getIncrementId(),
-                'authorizationID' => $txnId
+                'authorizationID' => $txnId,
             ));
 
             $response = $client->cardPaymentService()->reverseAuth($authReversal);
